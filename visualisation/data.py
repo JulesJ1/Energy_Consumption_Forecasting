@@ -8,8 +8,18 @@ columns = ["generation hydro pumped storage aggregated", "forecast wind offshore
 "generation fossil peat","generation fossil oil shale"]
 df = df.drop(columns,axis = 1)
 #plt.matshow(df.corr())
-df.fillna(df.mean(),inplace=True)
+#df.fillna(df.mean(),inplace=True)
+df.fillna(df.interpolate(method="linear"),inplace=True)
 #plt.show()
-print(df.mean())
+#print(df.mean())
 
-print(df.var())
+#print(df.var())
+df["time"] = pd.to_datetime(df["time"],format = "%Y-%m-%d %H:%M:%S")
+df['time'] = df['time'].apply(lambda x: x.replace(tzinfo=None))
+df["time"] = pd.to_datetime(df["time"],format="ISO8601")
+
+df = df.set_index('time')
+
+plt.plot(df.index, df['generation biomass'])
+
+plt.show()
