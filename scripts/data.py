@@ -5,7 +5,7 @@ from sklearn.model_selection import TimeSeriesSplit
 
 def load_data():
 
-    df = pd.read_csv("../energy_dataset.csv")
+    df = pd.read_csv("datasets/energy_dataset.csv")
 
     #drop columns
     columns = ["generation hydro pumped storage aggregated", "forecast wind offshore eday ahead", "generation fossil coal-derived gas", "generation wind offshore", "generation marine", "generation geothermal",
@@ -36,3 +36,5 @@ def testtrainsplit(dataframe):
         trainy, testy = y.iloc[train], y.iloc[test]
 
     return trainx,testx,trainy,testy
+
+#df = pd.read_csv("datasets/weather_features.csv")
