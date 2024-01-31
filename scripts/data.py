@@ -9,7 +9,7 @@ def load_data():
 
     #drop columns
     columns = ["generation hydro pumped storage aggregated", "forecast wind offshore eday ahead", "generation fossil coal-derived gas", "generation wind offshore", "generation marine", "generation geothermal",
-    "generation fossil peat","generation fossil oil shale"]
+    "generation fossil peat","generation fossil oil shale","forecast solar day ahead","forecast wind onshore day ahead"]
     df = df.drop(columns,axis = 1)
 
     #fill empty entries
@@ -21,11 +21,12 @@ def load_data():
     df["time"] = pd.to_datetime(df["time"],format="ISO8601")
     df["year"] = df["time"].dt.year
     df["month"] = df["time"].dt.month
+    df["week"] = df["time"].dt.weekday
     df = df.set_index('time')
 
     return df
 
-def testtrainsplit(dataframe):
+def split_data(dataframe):
     df = dataframe
     x = df.drop("total load actual",axis = 1)
     y = df["total load actual"]
@@ -37,4 +38,8 @@ def testtrainsplit(dataframe):
 
     return trainx,testx,trainy,testy
 
-#df = pd.read_csv("datasets/weather_features.csv")
+df = load_data()
+
+xt,xtest,yt,ytest = split_data(df)
+print(xt.columns)
+print(yt[0])
