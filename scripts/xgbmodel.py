@@ -8,6 +8,7 @@ import pandas as pd
 
 
 
+
 class xgboost_model():
     def __init__(self):
         self.df = data.load_data()
@@ -43,6 +44,8 @@ class xgboost_model():
         optimizer.fit(self.trainx,self.trainy)
 
         print(optimizer.best_score_)
+    
+
 
         
 model1 = xgboost_model()
