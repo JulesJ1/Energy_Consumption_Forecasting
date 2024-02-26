@@ -2,64 +2,100 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
-import requests
 from entsoe import EntsoePandasClient
 
-def load_data():
-
-    df = pd.read_csv("datasets/energy_dataset.csv")
-
-    #drop columns
-    columns = ["generation hydro pumped storage aggregated", "forecast wind offshore eday ahead", "generation fossil coal-derived gas", "generation wind offshore", "generation marine", "generation geothermal",
-    "generation fossil peat","generation fossil oil shale","forecast solar day ahead","forecast wind onshore day ahead","total load forecast","price day ahead"]
-    df = df.drop(columns,axis = 1)
-
-    #fill empty entries
-    df.fillna(df.interpolate(method="linear"),inplace=True)
-
-    #format time and set as index
-    df["time"] = pd.to_datetime(df["time"],format = "ISO8601")
-    df['time'] = df['time'].apply(lambda x: x.replace(tzinfo=None))
-    df["time"] = pd.to_datetime(df["time"],format="ISO8601")
-    df["year"] = df["time"].dt.year
-    df["month"] = df["time"].dt.month
-    df["week"] = df["time"].dt.weekday
-    df = df.set_index('time')
-
-    return df
-
-def split_data(dataframe):
-    df = dataframe
-    x = df.drop("total load actual",axis = 1)
-    y = df["total load actual"]
-    tss = TimeSeriesSplit(n_splits=2)
-    print(tss)
-    for train,test in tss.split(df):
-        trainx, testx = x.iloc[train,:], x.iloc[test,:]
-        trainy, testy = y.iloc[train], y.iloc[test]
-
-    return trainx,testx,trainy,testy
 
 
-def energy_api(starttime,endtime):
-    #response = requests.get("https://apidatos.ree.es/es/datos/demanda/demanda-maxima-horaria?start_date=2024-01-01T00:00&end_date=2024-01-31T23:59&time_trunc=hour")
+def energy_api(starttime,endtime,csv = None):
+    """
+    Makes queries to the Entsoe API for the given timespan. 
+    :param starttime: Query start time
+    :param endtime: Query end time
+    :param csv: name of csv file to convert and download dataframe into
+    :return: Pandas dataframe of load and generation data
+    """
+    
     client = EntsoePandasClient(api_key= "b337a1d6-b64c-49db-ac5a-8a260d29ec52")
-    #year=2017, month=1, day=1, hour=0
     start = pd.Timestamp(starttime, tz = 'Europe/Madrid' )
     end = pd.Timestamp(endtime, tz = 'Europe/Madrid' )
  
     energy = client.query_generation("ES", start = start, end = end)
     load  = client.query_load("ES", start = start, end=end)
-    return pd.concat([energy,load],axis=1)
-  
+    df = pd.concat([energy,load],axis=1)
+    df["time"] = df.index
+    df = df[df['time'].dt.minute == 0]
+    df.index = df["time"]
+    df = df.drop(["time"],axis = 1)
+    if csv:
+        f = open(csv, "w")
+        f.truncate()
+        f.close()
+        df.to_csv(csv, index=True,index_label="time")
+    return df
+
+def load_data(dataset = None,daily = None, start = None, end = None,csv = None):
+
+    if dataset:
+        df = pd.read_csv(dataset)
+    elif start:
+        df = energy_api(start,end, csv)
+    else:
+        df = pd.read_csv("datasets/energy_dataset.csv")
+    return df
+
+def preprocessing(dataframe,columns = None,daily = None):
     
+    df = dataframe
+    if columns:
+        df = dataframe.drop(columns, axis=1, errors='ignore')
+    df["time"] = pd.to_datetime(df["time"], utc = True)
+    if daily:
+        return df.resample("D").mean()
+    df = df.set_index('time').asfreq("1H")
+    df.fillna(df.interpolate(method="linear"),inplace=True)
+    time = df.index
+    df["year"] = df.index.year
+    df["month"] = df.index.month
+    df["week"] = df.index.weekday
+    return df
+
+def check_missing_values(dataframe):
+    
+    new_df = pd.DataFrame(
+        pd.date_range(
+            start=dataframe.index.min(), 
+            end=dataframe.index.max(),
+            freq='H'
+        ).difference(dataframe.index)
+    )
+    missing_columns = [col for col in dataframe.columns if col!="time"]
+    print(missing_columns)
+    
+    # add null data
+    new_df[missing_columns] = np.nan
+
+    # fix column names
+    new_df.columns = ["time"] + missing_columns
+    
+    return new_df
 
 
-#df = load_data()    
-#print(df.columns)
+
+def split_data(dataframe,target,train,validation):
+    df = dataframe
+    x = df.drop(target,axis = 1)
+    y = df[target]
+    end_train =  train
+    end_validation = validation
+    trainx,trainy = x.loc[: end_train, :],y.loc[: end_train]
+    valx,valy   = x.loc[end_train:end_validation, :],y.loc[end_train:end_validation]
+    testx,testy  = x.loc[end_validation:, :],y.loc[end_validation:]
+    return trainx,testx,trainy,testy, end_validation
+
 """
+#"2017-06-30 23:00:00+00:00"
+#'2018-03-31 23:00:00+00:00'
 df = load_data()
-
-xt,xtest,yt,ytest = split_data(df)
-print(xt.columns)
-print(yt[0])"""
+df = preprocessing(df)
+trainx,testx,trainy,testy, end_validation = split_data(df,"total load actual","2017-06-30 23:00:00+00:00",'2018-03-31 23:00:00+00:00')
+print("complete")"""
