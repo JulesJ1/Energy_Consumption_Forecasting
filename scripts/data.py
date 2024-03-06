@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
 from entsoe import EntsoePandasClient
+import requests
 
 
 
@@ -32,6 +33,11 @@ def energy_api(starttime,endtime,csv = None):
         f.close()
         df.to_csv(csv, index=True,index_label="time")
     return df
+
+
+def weather_api():
+    r = requests.get()
+
 
 def load_data(dataset = None,daily = None, start = None, end = None,csv = None):
 
