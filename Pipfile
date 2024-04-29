@@ -19,6 +19,15 @@ statsmodels = "==0.14.1"
 xgboost = "==2.0.3"
 entsoe-py = "*"
 scikit-optimize = "*"
+celery = "*"
+django-celery-beat = "*"
+rabbitmq = "*"
+django-celery-results = "*"
+gevent = "*"
+plotly = "*"
+dash = "*"
+dash-bootstrap-components = "*"
+dash-mantine-components = "*"
 
 [dev-packages]
 
