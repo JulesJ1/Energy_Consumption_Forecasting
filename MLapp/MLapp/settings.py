@@ -11,10 +11,15 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
+#import sys
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+#FILE_DIR = BASE_DIR.parent
+#sys.path.append("C:/Users/Jules/OneDrive/Desktop/MLProjects/Energy_Generation/scripts")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -31,6 +36,9 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'django_celery_results',
+    'callmodel',
+    'django_celery_beat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -121,3 +129,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+#CELERY_BROKER_URL = "transport://guest:guest@http://localhost:15672//"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_RESULT_EXTENDED = True
+CELERY_BROKER_URL = "amqp://guest:guest@127.0.0.1:5672//"
+CELERY_BEAT_SCHEDULE = {
+    'task-number-one': {
+        'task': "callmodel.tasks.callAPI",
+        'schedule': crontab(minute='*/2')}
+
+}
