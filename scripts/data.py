@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import TimeSeriesSplit
+
 from entsoe import EntsoePandasClient
 import requests
 
 from astral.sun import sun
 from astral import LocationInfo
-from datetime import datetime,timedelta
+from sklearn.preprocessing import PolynomialFeatures
+
 
 
 def energy_api(starttime,endtime = None,csv = None):
@@ -15,11 +15,11 @@ def energy_api(starttime,endtime = None,csv = None):
     Makes queries to the Entsoe API for the given timespan. 
 
     Args:
-        starttime: Query start time
-        endtime: Query end time
-        csv: name of csv file to convert and download dataframe into
+        starttime: Query start time.
+        endtime: Query end time.
+        csv: name of csv file to convert and download dataframe into.
     Returns:
-        A pandas dataframe of hourly load and generation data
+        A pandas dataframe of hourly load and generation data.
     """
     
     client = EntsoePandasClient(api_key= "b337a1d6-b64c-49db-ac5a-8a260d29ec52")
@@ -46,6 +46,13 @@ def energy_api(starttime,endtime = None,csv = None):
     return df
 
 def weather_api():
+    """
+    Makes a queriyto the OpenWeather API. The API returns hourly 48 hour ahead weather predictions. 
+
+  
+    Returns:
+        A pandas dataframe of hourly 48 hour ahead temperature predictions.
+    """    
     r = requests.get("https://api.openweathermap.org/data/3.0/onecall?lat=40.416775&lon=-3.703790&exclude=current,minutely,daily,alerts&appid=55194385c9175281575e04c124e2fdbc")
 
     r = r.json()
@@ -60,7 +67,14 @@ def weather_api():
 
 def weather_data(csv = None,steps = None):
     """
+    Resamples bulk historical weather data from the OpenWeather API, so that it can be used for training a model. Each forecast from the API contains 385 samples.
 
+    Args:
+        csv: The name of the csv file to store the resampled weather data.
+        steps: The number of samples taken from each forecast.
+        
+    Returns:
+        A pandas dataframe of hourly historical weather forecasts.
     
     
     """
@@ -175,8 +189,8 @@ def check_missing_values(dataframe):
 
 def split_data(dataframe,target,train,validation):
     """
-    Splits a time series dataframe into training, validation and test sets.
-    Each split is in chronological.
+    Splits a time series dataframe into training, validation and test sets, while maintaning the datas sequential order.
+    
 
     Args:
         dataframe: A dataframe.
@@ -202,6 +216,16 @@ def split_data(dataframe,target,train,validation):
 
 
 def fourier_features(feature,cycle_length,order):
+    """
+    Creates fourier wave patterns for the provided features to represent seasonal trends. 
+
+    Args:
+        feature: Seasonal data such as the day of week, month or hour of day.
+        cycle_length: The temporal length of the pattern.
+        order: The number of cos, sin pairs to generate.
+    Returns:
+        A dataframe containing sin and cos wave columns representing seasonal patterns.
+    """
     result = pd.DataFrame()
 
     k = 2 * np.pi * feature/cycle_length
@@ -209,7 +233,20 @@ def fourier_features(feature,cycle_length,order):
         result[f"sin_{feature.name}_{i}"] =  np.sin(i*k)
         result[f"cos_{feature.name}_{i}"]    =  np.cos(i*k)
     return result
+
+
 def tempfeatures(dataframe):
+
+    """    
+    Creates Rolling temperature features (minimum, maximum, average) for the daily and weekly temperature observations around each sample. 
+
+    Args:
+        dataframe: A dataframe containing a temerature column labeled "temp".
+
+    Returns:
+        A dataframe containing rolling temperature aggregation from the original data.
+    
+    """
     temp_features = dataframe["temp"].copy()
     temp_features = temp_features.to_frame()
     temp_features['temp_roll_mean_1_day'] = temp_features['temp'].rolling(24, closed='left').mean()
@@ -221,8 +258,20 @@ def tempfeatures(dataframe):
 
     return temp_features
 
-def create_features(dataframe,weather_df = None):
-    #add weahter_api call for live data
+def create_features(dataframe,polynomial_columns, weather_df = None):
+    """
+        Creates exogonous features derived from a dataframes timestamp:
+        - Calender features
+        - sunlight hours
+        - season trends and patterns 
+
+    Args:
+        dataframe: A dataframe with a DateTime index.
+        weather_df: If provided, adds temperature features to the resulting dataframe.
+
+    Returns:
+        A dataframe exogenous features that are needed to train a model or create predictions.
+    """
 
 
     location = LocationInfo(
@@ -279,51 +328,43 @@ def create_features(dataframe,weather_df = None):
         cyclical_features = pd.concat([cyclical_features,temp_df], axis = 1)
     #cyclical_features = cyclical_features.join(temp_features["temp"])
     exo_features = pd.concat([exo_features, cyclical_features], axis=1)
+
+
+    transformer_poly = PolynomialFeatures(
+                        degree           = 2,
+                        interaction_only = True,
+                        include_bias     = False,
+                        
+
+                    ).set_output(transform="pandas")
+    """    'sin_sunrise_hour_1',
+        'cos_sunrise_hour_1',
+        'sin_sunset_hour_1',
+        'cos_sunset_hour_1',"""
+    poly_cols = [
+        'sin_month_1', 
+        'cos_month_1',
+        'sin_week_of_year_1',
+        'cos_week_of_year_1',
+        'sin_week_day_1',
+        'cos_week_day_1',
+        'sin_hour_day_1',
+        'cos_hour_day_1',
+        'daylight_hours',
+        'is_daylight',
+
+    ]
+    poly_cols = polynomial_columns
+
+    poly_features = transformer_poly.fit_transform(exo_features[poly_cols].dropna())
+    #poly_features = transformer_poly.fit_transform(exog[poly_cols])
+    poly_features = poly_features.drop(columns=poly_cols)
+    poly_features.columns = [f"poly_{col}" for col in poly_features.columns]
+    poly_features.columns = poly_features.columns.str.replace(" ", "__")
+
+    exo_features = pd.concat([exo_features, poly_features], axis=1)
+
+
+
     return exo_features
-"""
-now = datetime.now()
-prevhour = now - timedelta(hours=12)
-starttime = prevhour.strftime("%d/%m/%Y %H:00:00")
-endtime = now.strftime("%Y-%m-%d %H:00:00")
-df =energy_api(starttime,endtime=endtime)
 
-print(df.columns)"""
-
-"""
-df = load_data()
-df = preprocessing(df)
-#temp = tempfeatures(df)
-weather_df = pd.read_csv("datasets/weather_features.csv")
-weather_df = weather_df.loc[weather_df["city_name"] == "Madrid"]
-weather_df = weather_df.drop_duplicates(subset="dt_iso")
-temp = tempfeatures(weather_df)
-print(temp.head)
-print(temp.iloc[70])
-
-temp = temp.dropna()
-print(len(temp))
-exo = create_features(df)
-
-print(len(exo))
-print(exo.iloc[-1])
-exo = exo.dropna()
-print(len(exo))
-"""
-"""
-df = load_data(dataset="datasets/energy_updated.csv")
-df = preprocessing(df)
-t = tempfeatures(weather_data())
-t = t.loc['2024-03-01 00:00:00':'2024-03-01 05:00:00',:] 
-print(t.index)
-print(df.index)
-exo = create_features(df)
-print(exo)"""
-"""
-df = energy_api('2024-03-06 21:00:00','2024-03-06 22:00:00')
-print(df["Actual Load"])
-#"2017-06-30 23:00:00+00:00"
-#'2018-03-31 23:00:00+00:00'
-df = load_data()
-df = preprocessing(df)
-trainx,testx,trainy,testy, end_validation = split_data(df,"total load actual","2017-06-30 23:00:00+00:00",'2018-03-31 23:00:00+00:00')
-print("complete")"""
