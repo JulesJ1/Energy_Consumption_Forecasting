@@ -85,99 +85,104 @@ fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
 #'#f9f9f9'
 fig.update_layout(title_x = 0.5,xaxis_title = "date",yaxis_title="K",plot_bgcolor= 'rgba(0, 0, 0, 0)',paper_bgcolor= 'rgba(0, 0, 0, 0)',xaxis_rangeslider_visible=True)
 
-app.layout = dmc.Grid(
-    children = [
-        dmc.Col(dcc.Markdown(children="# Forecasting Power Consumption",style={'textAlign':'center',"margin-bottom":100,'padding-top':30}),span = 12),
-        dmc.Space(h="xl"),
-        
-        dmc.Col(
-            dmc.Card(children = [
-            
-                    html.H6("Daily High",style={"color":"grey"}),
-                    html.H3("1234 kw",id = "high-value")
+app.layout = dmc.MantineProvider(
 
-                ],
-                    shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                        radius="30",
-                        withBorder=False,w= 150,
-                        
-                        ),span = 2,offset=4),
+    dmc.Grid(
+        children = [
+            dmc.GridCol(dcc.Markdown(children="# Forecasting Power Consumption",style={'textAlign':'center',"margin-bottom":100,'padding-top':30}),span = 12),
+            dmc.Space(h="xl"),
             
-        dmc.Col(
+            dmc.GridCol(children = [
+            dmc.SimpleGrid(cols = 3,children = [
                 dmc.Card(children = [
-                    html.H6("Daily Low",style={"color":"grey"}),
-                    html.H3("234 kw")
+                
+                        html.H6("Daily High",style={"color":"grey"}),
+                        html.H3("1234 kw",id = "high-value",style = {"color":"green"})
+
+                    ],
+                        shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
+                            radius="30",
+                            #withBorder=False,w= 150,
+                            
+                            ),
+                
+            
+                    dmc.Card(children = [
+                        html.H6("Daily Low",style={"color":"grey"}),
+                        html.H3("234 kw",style = {"color":"red"})
+
+                    ],
+                        shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
+                            radius="30",
+                            #withBorder=False,w= 150,
+                            ),
+                    
+            
+                dmc.Card(children = [
+                    html.H6("Daily Average",style={"color":"grey"}),
+                    html.H3("5343 kw",style = {"color":"blue"})
 
                 ],
                     shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
                         radius="30",
-                        withBorder=False,w= 150,
-                        ),span = 2),
-                
-        dmc.Col(
-            dmc.Card(children = [
-                html.H6("Daily Average",style={"color":"grey"}),
-                html.H3("5343 kw")
-
-            ],
-                shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                    radius="30",
-                    withBorder=False,w= 150),span = 2),
-        
-        
-
-        dmc.Col(
-            dmc.Paper(
-                children = [
-                    dmc.Button("Confirm",variant="filled",id = "confirm-button",n_clicks=0),
-                    dcc.Markdown('Select Prediction Length',style={"font-size":'16px'}),
-                    html.Br(),
-                    pred_length := dmc.Slider(1,4,
-                        color = "blue",
-                        marks = [{
-                        1: "12H",
-                        2: "24H",
-                        3: "36H",
-                        4: "48H"}]
-                    )
-                ],
-                #xs, sm, md, lg, xl
-                shadow = "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                withBorder=False,
-                radius = "30",
-                style={"width":"90%",
-                        "margin-left":30,
-                        "height":350,
-                        #"backgroundColor":"#f9f9f9",
-                        "padding":"1rem"
-                },
+                        #withBorder=False,w= 150
+                        )
             
-            ),span = 3),
+        ])],span = 6,offset = 3,style={"margin-left":513}),
 
-        dmc.Col(
-            dmc.Paper(
-                        children=[gr := dcc.Graph(figure=fig)],
-                        shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                        radius="30",
-                        withBorder=False,
-                        ),
-            style={"margin-left":30},
-            span = 7)
-            ,
-            #dbc.Col(dbc.Card(gf := dcc.Graph(figure=fig))),
-            dcc.Interval(
-            id='interval-component',
-            interval=60*1000000, # in milliseconds
-            #interval = 60000,
-            n_intervals=0
-        ),
-        dcc.Store(
-            id='session', storage_type='session'
-        )
-        
-        
+            dmc.GridCol(
+                dmc.Paper(
+                    children = [
+                        dmc.Button("Confirm",variant="filled",id = "confirm-button",n_clicks=0),
+                        dcc.Markdown('Select Prediction Length',style={"font-size":'16px'}),
+                        html.Br(),
+                        pred_length := dmc.Slider(1,4,
+                            
+                            marks = [{
+                            1: "12H",
+                            2: "24H",
+                            3: "36H",
+                            4: "48H"}]
+                        )
+                    ],
+                    #xs, sm, md, lg, xl
+                    shadow = "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
+                    withBorder=False,
+                    radius = "30",
+                    style={"width":"90%",
+                            "margin-left":30,
+                            "height":350,
+                            #"backgroundColor":"#f9f9f9",
+                            "padding":"1rem"
+                    },
+                
+                ),span = 3),
+
+            dmc.GridCol(
+                dmc.Paper(
+                            children=[gr := dcc.Graph(figure=fig)],
+                            shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
+                            radius="30",
+                            withBorder=False,
+                            ),
+                style={"margin-left":30},
+                span = 7)
+                ,
+                #dbc.Col(dbc.Card(gf := dcc.Graph(figure=fig))),
+                dcc.Interval(
+                id='interval-component',
+                interval=60*1000000, # in milliseconds
+                #interval = 60000,
+                n_intervals=0
+            ),
+            dcc.Store(
+                id='session', storage_type='session'
+            )
+            
+            
 
     ],gutter = "xs")
+)
 #,'height':"100vh"
 @callback(
     Output('high-value', 'children'),
