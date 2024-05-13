@@ -17,4 +17,4 @@ Start the app by running the "dashapp.py" file, or through the terminal using:
 ```bash
 python dashapp.py
 ```
-A public container for running the app is available at:
+A public docker image for running the app is available at: (https://hub.docker.com/r/jules594/energy-dash)
