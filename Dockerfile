@@ -8,6 +8,6 @@ RUN pip install -r requirements.txt
 
 EXPOSE 8050
 
-CMD ["python","work-dir/dashapp.py"]
+CMD ["python","dashapp.py"]
 
 
