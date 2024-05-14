@@ -3,7 +3,7 @@
 ## Datasets
 ### Consumption Data
 ENTSO-E, the European Network of Transmission System Operators for Electricity, provides a free API which gives users access to historical and current data from different TSOs around Europe. The power consumption data used in this project is taken from the ENTSO-E API, and consists of the hourly total consumption data for Spain. 
-<img src="../images/dataset.png">
+<img src="../assets/images/dataset.png">
 ### Weather Data
 The weather dataset is taken from the OpenWeather API and contains hourly weather data including metrics such as temperature, wind speed and cloud coverage for the corresponding consumption data timestamps in Madrid, Spain.
 ## Time Series Analysis
@@ -12,7 +12,7 @@ The weather dataset is taken from the OpenWeather API and contains hourly weathe
 
 Seasonality in time-series data are patterns that occur at regular intervals. Seasonal patterns can be found by observing the average distribution of data during different time periods.
 
-<img src="../images/3plots.JPG">
+<img src="../assets/images/3plots.JPG">
 
 The following observations from these plots can be made about the dataset :
 * The weekly reoccurring weekly patterns in the data show that on weekends, there is a large dip in electrical load.
@@ -29,7 +29,7 @@ Partial autocorrelation measures the linear relationship between the current tar
 
 Partial autocorrelation for the first 85 lags:
 
-<img src="../images/correlation85.png" width=50% height=50%>
+<img src="../assets/images/correlation85.png" width=50% height=50%>
 
 
 
