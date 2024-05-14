@@ -7,8 +7,19 @@ The aim of this project is to explore how machine learning can be used to predic
 
 Information about model performance and dataset analysis is available [here](https://github.com/JulesJ1/Energy_Generation/tree/main/scripts/README.md)
 
-## Running The App
-Download the latest version available from the release page. Install the apps dependancies into your environment using:
+## Running The Code
+
+#### Requirement: 
+
+ENTSO-E API key - Running a clone requires an ENTSO-E API key to give access to the live energy consumption data. API keys are available by sending an email to transparency@entsoe.eu with “Restful API access” in the subject line.
+The API key should then be stored in a file named ".env" including the following line:
+```bash
+ENTSOE_API_KEY = <YOUR API KEY>
+```
+
+
+
+Install the apps dependancies into your environment using:
 ```bash
 pip install -r requirements.txt
 ```
