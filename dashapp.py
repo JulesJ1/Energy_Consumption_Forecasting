@@ -240,7 +240,7 @@ def load_graph(n,storedata):
     storedata = df.to_json(orient="split")
     
 
-    return fig, f"{int(high)} kw",f"{int(low)} kw",f"{int(avg)} kw",storedata
+    return fig, f"{int(high)} MW",f"{int(low)} MW",f"{int(avg)} MW",storedata
    
 
 @app.callback(
@@ -259,4 +259,4 @@ def update_graph(btn,pred_length,prev_length,storedata):
     return fig
 
 if __name__ == '__main__':
-    app.run_server(debug=True,port=8050)
+    app.run_server(host = "0.0.0.0",port=8050,debug=True)

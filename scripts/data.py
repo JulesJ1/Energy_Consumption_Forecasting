@@ -3,6 +3,8 @@ import numpy as np
 
 from entsoe import EntsoePandasClient
 import requests
+from dotenv import load_dotenv
+import os
 
 from astral.sun import sun
 from astral import LocationInfo
@@ -21,8 +23,9 @@ def energy_api(starttime,endtime = None,csv = None):
     Returns:
         A pandas dataframe of hourly load and generation data.
     """
-    
-    client = EntsoePandasClient(api_key= "b337a1d6-b64c-49db-ac5a-8a260d29ec52")
+    load_dotenv()
+    client = EntsoePandasClient(api_key= os.getenv("ENTSOE_API_KEY"))
+ 
     start = pd.Timestamp(starttime, tz = 'Europe/Madrid' )
 
     if endtime:
@@ -53,7 +56,9 @@ def weather_api():
     Returns:
         A pandas dataframe of hourly 48 hour ahead temperature predictions.
     """    
-    r = requests.get("https://api.openweathermap.org/data/3.0/onecall?lat=40.416775&lon=-3.703790&exclude=current,minutely,daily,alerts&appid=55194385c9175281575e04c124e2fdbc")
+    load_dotenv()
+    api_key = api_key= os.getenv("WEATHER_API_KEY")
+    r = requests.get(f"https://api.openweathermap.org/data/3.0/onecall?lat=40.416775&lon=-3.703790&exclude=current,minutely,daily,alerts&appid={api_key}")
 
     r = r.json()
 
