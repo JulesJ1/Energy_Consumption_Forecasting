@@ -259,4 +259,4 @@ def update_graph(btn,pred_length,prev_length,storedata):
     return fig
 
 if __name__ == '__main__':
-    app.run_server(host = "0.0.0.0",port=8050,debug=True)
+    app.run_server(host = "0.0.0.0",port=8050,debug=False)
