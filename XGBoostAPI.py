@@ -11,10 +11,14 @@ from datetime import datetime, timedelta
 
 app = FastAPI()
 
-with open('models/xgboost_v2_no_temp.joblib', 'rb') as pickle_file:
-    model = pickle.load(pickle_file)
 
 
+@app.on_event('startup')
+def load_model():
+    with open('models/xgboost_v2_no_temp.joblib', 'rb') as pickle_file:
+        model = pickle.load(pickle_file)
+
+#Pulls 
 @app.post("/energydata")
 def energydata(data:Dates):
     data = data.dict()
@@ -37,19 +41,21 @@ def energydata(data:Dates):
 
 @app.post("/predict")
 def predict(data:Predictions):
-
-
-
     lags =  data.Lastwindow
-    lags = pd.DataFrame.from_dict(lags.json())
+
+    now = datetime.now()
+
+    lags = pd.DataFrame.from_dict(lags)
+   
     lags.index = pd.to_datetime(lags.index)
  
     if lags.index.tzinfo != None:
         lags.index.tz_convert(tz = "utc")
     lags.index = lags.index.tz_localize(None)
     lags = lags.asfreq("1h")
+
     steps = data.steps
-    now = datetime.now()
+    
 
     with open('models/xgboost_v2_no_temp.joblib', 'rb') as pickle_file:
         model1 = pickle.load(pickle_file)
@@ -73,7 +79,7 @@ def predict(data:Predictions):
             'daylight_hours',
             'is_daylight']
 
-    exog = data.create_features(exo_df,poly_cols)
+    exog = energy.create_features(exo_df,poly_cols)
 
     features = []
 
@@ -93,6 +99,9 @@ def predict(data:Predictions):
             )
 
     
+    prediction.columns = ["Actual Load"]
+    
+
     return prediction.to_dict()
     
 

@@ -1,7 +1,8 @@
 
-from pydantic import BaseModel,ConfigDict
+from pydantic import BaseModel,ConfigDict, Json
 from datetime import datetime
 import pandas as pd
+from typing import Any
 
 class Dates(BaseModel):
     starttime: datetime = None
@@ -11,5 +12,5 @@ class Dates(BaseModel):
 
 class Predictions(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    Lastwindow: pd.DataFrame
+    Lastwindow: Json[Any]
     steps:  int
