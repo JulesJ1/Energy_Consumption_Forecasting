@@ -4,11 +4,10 @@ import plotly.express as px
 import scripts.data as data
 from datetime import datetime, timedelta
 import dash_mantine_components as dmc
-import pickle
 import pandas as pd
 import plotly.graph_objects as go
 from io import StringIO  
-
+import requests
 
 def graph(prev_data,steps,dataframe):
 
@@ -16,68 +15,29 @@ def graph(prev_data,steps,dataframe):
     fig = go.Figure()
 
     hours = 24*prev_data
-    prediction_df = prediction(dataframe,12*steps)
+  
+    
+    params = {
+        "Lastwindow":dataframe.to_json(date_format="iso"),
+        "steps":steps*12,
+    }
+
+    prediction_df = requests.post("http://127.0.0.1:8000/predict",json=params)
+    
+    prediction_df = pd.DataFrame.from_dict(prediction_df.json(),orient="index")
+    prediction_df.index = pd.to_datetime(prediction_df.index)
+    prediction_df = prediction_df.apply(lambda x: round(x,1))
+    
+    
 
     fig.add_trace(go.Scatter(x=dataframe.index[-hours:],y=dataframe["Actual Load"].iloc[-hours:],mode="lines",name="actual power load",line = dict(color="dodgerblue")))
-    fig.add_trace(go.Scatter(x = prediction_df.index, y = prediction_df.values,name="predicted power load",line = dict(color="orange",dash="dash")))
+    fig.add_trace(go.Scatter(x = prediction_df[0].index, y = prediction_df[0].values,name="predicted power load",mode = "lines",line = dict(color="orange",dash = "dash")))
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
     
-    fig.update_layout(yaxis_title="Total Load",plot_bgcolor= 'rgba(0, 0, 0, 0)',paper_bgcolor= 'rgba(0, 0, 0, 0)',xaxis_rangeslider_visible=True,title = f"Daily {12*steps}H Ahead Prediction")
+    fig.update_layout(yaxis_title="Total Load (MW)",plot_bgcolor= 'rgba(0, 0, 0, 0)',paper_bgcolor= 'rgba(0, 0, 0, 0)',xaxis_rangeslider_visible=True,title = f"Daily {12*steps}H Ahead Prediction")
     return fig, dataframe
 
-
-def prediction(dataframe,steps):
-
-    now = datetime.now()
-
-    with open('models/xgboost_v2_no_temp.joblib', 'rb') as pickle_file:
-        model1 = pickle.load(pickle_file)
-
-
-    lags = dataframe
- 
-    if lags.index.tzinfo != None:
-        lags.index.tz_convert(tz = "utc")
-    lags.index = lags.index.tz_localize(None)
-    lags = lags.asfreq("1h")
-
-    start = now.strftime("%Y-%m-%d %H:00:00")
-    end = now + timedelta(hours=steps)
-    end = end.strftime("%Y-%m-%d %H:00:00")
-    i = pd.date_range(start,end,freq = "1h")
-
-    exo_df = pd.DataFrame(index = i)
-
-    poly_cols =     ['sin_month_1', 
-            'cos_month_1',
-            'sin_week_of_year_1',
-            'cos_week_of_year_1',
-            'sin_week_day_1',
-            'cos_week_day_1',
-            'sin_hour_day_1',
-            'cos_hour_day_1',
-            'daylight_hours',
-            'is_daylight']
-
-    exog = data.create_features(exo_df,poly_cols)
-
-    features = []
-
-    features.extend(exog.filter(regex='^sin_|^cos_').columns.tolist())
-
-    features.extend(exog.filter(regex='^temp_.*').columns.tolist())
-
-    features.extend(['temp'])
-    exog = exog.filter(features, axis=1)
- 
-    features = [x for x in features if "temp" not in x]
-
-    return model1.predict(
-                steps = steps,
-                last_window = lags["Actual Load"],
-                exog = exog[features]
-            )
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -134,15 +94,16 @@ app.layout = dmc.MantineProvider( dmc.Grid(
                     )
             
         ])
-    ],span = 6,offset = 3,style={"margin-left":484}),    
+    ],span = 6,offset = 3),    
     
+    dmc.Col(span=3),
 
     dmc.Col(dmc.Paper(
         children = [
             dcc.Markdown('Filtering Options:',style={"font-size":'22px'}),
 
             html.Br(),
-            dcc.Markdown('Select Length of Previous Data',style={"font-size":'16px'}),
+            dcc.Markdown('Select Length of Previous Energy Data',style={"font-size":'16px'}),
             pred_length := dmc.Slider(
                 id = "data-length",
                 min = 1,max = 4,value = 1,
@@ -177,14 +138,10 @@ app.layout = dmc.MantineProvider( dmc.Grid(
         withBorder=False,
         radius = "30",
         style={"width":"90%",
-                "margin-left":30,
+                "margin-left":"1.5rem",
                 "height":300,
                 "padding":"1rem"
         },
-        
-        
-    
-    
     
     ),span = 3),
 
@@ -229,7 +186,19 @@ def load_graph(n,storedata):
     prevhour = now - timedelta(hours=169)
     starttime = prevhour.strftime("%Y-%m-%d %H:00:00")
     endtime = now.strftime("%Y-%m-%d %H:00:00")
-    df = data.energy_api(starttime,endtime=endtime)
+ 
+
+    params = {
+        "starttime":f"{starttime}",
+        "endtime":f"{endtime}",
+    }
+    data = requests.post("http://127.0.0.1:8000/energydata",json=params)
+    df = pd.DataFrame.from_dict(data.json())
+    df.index = pd.to_datetime(df.index)
+    df.index = pd.to_datetime(df.index, format="iso")
+    df.index = df.index.tz_localize(None)
+
+
 
     fig,df = graph(1,1,df)
     
@@ -240,7 +209,7 @@ def load_graph(n,storedata):
     storedata = df.to_json(orient="split")
     
 
-    return fig, f"{int(high)} MW",f"{int(low)} MW",f"{int(avg)} MW",storedata
+    return fig, f"{format(int(high),',d')} MW",f"{format(int(low),',d')} MW",f"{format(int(avg),',d')} MW",storedata
    
 
 @app.callback(
@@ -259,4 +228,4 @@ def update_graph(btn,pred_length,prev_length,storedata):
     return fig
 
 if __name__ == '__main__':
-    app.run_server(host = "0.0.0.0",port=8050,debug=False)
+    app.run_server(host = "0.0.0.0",port=8050,debug=True)
