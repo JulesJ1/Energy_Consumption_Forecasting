@@ -28,4 +28,8 @@ Start the app by running the "dashapp.py" file, or through the terminal using:
 ```bash
 python dashapp.py
 ```
+## Dashboard
+
+<img src="/assets/images/dashapp.JPG">
+
 
