@@ -1,0 +1,32 @@
+services:
+
+
+  frontend:
+    container_name: frontend
+    image: frontent:1.0.0
+    build:
+      context: ./
+      dockerfile: ./frontend/frontend.dockerfile
+    ports:
+      - "127.0.0.1:8050:8050"
+    depends_on:
+      - api
+
+      
+  api:
+    #countainer_name: api
+    environment:
+      API_KEY: value
+    build:
+      context: ./
+      dockerfile: ./scripts/api.dockerfile
+    ports:
+      - 8000:8000
+
+
+
+
+
+
+
+

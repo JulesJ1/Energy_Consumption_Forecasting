@@ -35,6 +35,7 @@ uvicorn = "*"
 gunicorn = "*"
 fastapi = "*"
 pydantic = "*"
+upgrade-requirements = "*"
 
 [dev-packages]
 ipykernel = "*"
