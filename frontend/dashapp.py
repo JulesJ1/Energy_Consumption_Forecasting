@@ -1,7 +1,6 @@
 from dash import Dash, dcc,html, Output, Input, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
-import scripts.data as data
 from datetime import datetime, timedelta
 import dash_mantine_components as dmc
 import pandas as pd
@@ -22,7 +21,7 @@ def graph(prev_data,steps,dataframe):
         "steps":steps*12,
     }
 
-    prediction_df = requests.post("http://127.0.0.1:8000/predict",json=params)
+    prediction_df = requests.post("http://api:8000/predict",json=params)
     
     prediction_df = pd.DataFrame.from_dict(prediction_df.json(),orient="index")
     prediction_df.index = pd.to_datetime(prediction_df.index)
@@ -35,7 +34,7 @@ def graph(prev_data,steps,dataframe):
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
     
-    fig.update_layout(yaxis_title="Total Load (MW)",plot_bgcolor= 'rgba(0, 0, 0, 0)',paper_bgcolor= 'rgba(0, 0, 0, 0)',xaxis_rangeslider_visible=True,title = f"Daily {12*steps}H Ahead Prediction")
+    fig.update_layout(yaxis_title="Total Load (GW)",plot_bgcolor= 'rgba(0, 0, 0, 0)',paper_bgcolor= 'rgba(0, 0, 0, 0)',xaxis_rangeslider_visible=True,title = f"Daily {12*steps}H Ahead Prediction")
     return fig, dataframe
 
 
@@ -62,7 +61,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
             dmc.Card(children = [
             
                     html.H6("Daily High",style={"color":"grey"}),
-                    html.H3("0 MW",id = "high-value")
+                    html.H3("0 GW",id = "high-value")
 
                 ],
                     shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
@@ -74,7 +73,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
     
             dmc.Card(children = [
                 html.H6("Daily Low",style={"color":"grey"}),
-                html.H3("0 MW",id = "low-value")
+                html.H3("0 GW",id = "low-value")
 
             ],
                 shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
@@ -85,7 +84,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
             
             dmc.Card(children = [
                 html.H6("Daily Average",style={"color":"grey"}),
-                html.H3("0 MW",id = "avg-value")
+                html.H3("0 GW",id = "avg-value")
 
             ],
                 shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
@@ -181,7 +180,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
 
 def load_graph(n,storedata):
     
-    now = datetime.now()    
+    now = datetime.utcnow() + timedelta(hours=2)        
 
     prevhour = now - timedelta(hours=169)
     starttime = prevhour.strftime("%Y-%m-%d %H:00:00")
@@ -192,7 +191,7 @@ def load_graph(n,storedata):
         "starttime":f"{starttime}",
         "endtime":f"{endtime}",
     }
-    data = requests.post("http://127.0.0.1:8000/energydata",json=params)
+    data = requests.post("http://api:8000/energydata",json=params)
     df = pd.DataFrame.from_dict(data.json())
     df.index = pd.to_datetime(df.index)
     df.index = pd.to_datetime(df.index, format="iso")
@@ -209,7 +208,7 @@ def load_graph(n,storedata):
     storedata = df.to_json(orient="split")
     
 
-    return fig, f"{format(int(high),',d')} MW",f"{format(int(low),',d')} MW",f"{format(int(avg),',d')} MW",storedata
+    return fig, f"{format(int(high),',d')} GW",f"{format(int(low),',d')} GW",f"{format(int(avg),',d')} GW",storedata
    
 
 @app.callback(

@@ -1,7 +1,6 @@
 
 from pydantic import BaseModel,ConfigDict, Json
 from datetime import datetime
-import pandas as pd
 from typing import Any
 
 class Dates(BaseModel):

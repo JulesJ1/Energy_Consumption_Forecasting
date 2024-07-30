@@ -87,12 +87,13 @@ fig.update_layout(title_x = 0.5,xaxis_title = "date",yaxis_title="K",plot_bgcolo
 
 app.layout = dmc.MantineProvider(
 
+    #dmc.Container( children = [
     dmc.Grid(
         children = [
-            dmc.GridCol(dcc.Markdown(children="# Forecasting Power Consumption",style={'textAlign':'center',"margin-bottom":100,'padding-top':30}),span = 12),
+            dmc.Col(dcc.Markdown(children="# Forecasting Power Consumption",style={'textAlign':'center',"margin-bottom":100,'padding-top':30}),span = 12),
             dmc.Space(h="xl"),
             
-            dmc.GridCol(children = [
+            dmc.Col(children = [
             dmc.SimpleGrid(cols = 3,children = [
                 dmc.Card(children = [
                 
@@ -102,7 +103,8 @@ app.layout = dmc.MantineProvider(
                     ],
                         shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
                             radius="30",
-                            #withBorder=False,w= 150,
+                            
+                           
                             
                             ),
                 
@@ -114,7 +116,7 @@ app.layout = dmc.MantineProvider(
                     ],
                         shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
                             radius="30",
-                            #withBorder=False,w= 150,
+                          
                             ),
                     
             
@@ -124,13 +126,15 @@ app.layout = dmc.MantineProvider(
 
                 ],
                     shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                        radius="30",
-                        #withBorder=False,w= 150
+                        radius="30"
+                      
                         )
             
-        ])],span = 6,offset = 3,style={"margin-left":513}),
+        ])],span = 6,offset = 3),
 
-            dmc.GridCol(
+        
+        #,style={"margin-left":"20rem"}
+            dmc.Col(
                 dmc.Paper(
                     children = [
                         dmc.Button("Confirm",variant="filled",id = "confirm-button",n_clicks=0),
@@ -150,7 +154,7 @@ app.layout = dmc.MantineProvider(
                     withBorder=False,
                     radius = "30",
                     style={"width":"90%",
-                            "margin-left":30,
+                            "margin-left":"1.5rem",
                             "height":350,
                             #"backgroundColor":"#f9f9f9",
                             "padding":"1rem"
@@ -158,14 +162,14 @@ app.layout = dmc.MantineProvider(
                 
                 ),span = 3),
 
-            dmc.GridCol(
+            dmc.Col(
                 dmc.Paper(
                             children=[gr := dcc.Graph(figure=fig)],
                             shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
                             radius="30",
                             withBorder=False,
                             ),
-                style={"margin-left":30},
+                #style={"margin-left":30},
                 span = 7)
                 ,
                 #dbc.Col(dbc.Card(gf := dcc.Graph(figure=fig))),
