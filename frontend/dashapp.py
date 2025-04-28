@@ -1,7 +1,7 @@
 from dash import Dash, dcc,html, Output, Input, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 import dash_mantine_components as dmc
 import pandas as pd
 import plotly.graph_objects as go
@@ -53,9 +53,9 @@ fig.update_layout(title_x = 0.5,xaxis_title = "date",yaxis_title="K",plot_bgcolo
 
 app.layout = dmc.MantineProvider( dmc.Grid(
     children = [
-    dmc.Col([header],style={'margin-bottom':70,'padding-top':30},span = 12),
+    dmc.GridCol([header],style={'margin-bottom':70,'padding-top':30},span = 12),
 
-    dmc.Col(children = [
+    dmc.GridCol(children = [
         dmc.SimpleGrid(cols = 3,children = [    
             
             dmc.Card(children = [
@@ -65,7 +65,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
 
                 ],
                     shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                        radius="30",
+                        radius = 2,
                         
                         
                         ),
@@ -77,7 +77,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
 
             ],
                 shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                    radius="30",
+                    radius = 2,
                     
                     ),
                     
@@ -88,16 +88,16 @@ app.layout = dmc.MantineProvider( dmc.Grid(
 
             ],
                 shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-                    radius="30",
+                    radius = 2,
                     
                     )
             
         ])
     ],span = 6,offset = 3),    
     
-    dmc.Col(span=3),
+    dmc.GridCol(span=3),
 
-    dmc.Col(dmc.Paper(
+    dmc.GridCol(dmc.Paper(
         children = [
             dcc.Markdown('Filtering Options:',style={"font-size":'22px'}),
 
@@ -135,7 +135,8 @@ app.layout = dmc.MantineProvider( dmc.Grid(
 
         shadow = "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
         withBorder=False,
-        radius = "30",
+        radius = 2,
+ 
         style={"width":"90%",
                 "margin-left":"1.5rem",
                 "height":300,
@@ -144,10 +145,10 @@ app.layout = dmc.MantineProvider( dmc.Grid(
     
     ),span = 3),
 
-    dmc.Col(dmc.Paper(
+    dmc.GridCol(dmc.Paper(
             children=[gr := dcc.Graph(figure=fig)],
             shadow= "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)",
-            radius="30",
+            radius = 2,
             withBorder=False,
         ),span =7,
         style={"margin-right":30})
@@ -180,7 +181,7 @@ app.layout = dmc.MantineProvider( dmc.Grid(
 
 def load_graph(n,storedata):
     
-    now = datetime.utcnow() + timedelta(hours=2)        
+    now = datetime.now(timezone.utc) + timedelta(hours=2)        
 
     prevhour = now - timedelta(hours=169)
     starttime = prevhour.strftime("%Y-%m-%d %H:00:00")
@@ -227,4 +228,4 @@ def update_graph(btn,pred_length,prev_length,storedata):
     return fig
 
 if __name__ == '__main__':
-    app.run_server(host = "0.0.0.0",port=8050,debug=True)
+    app.run(host = "0.0.0.0",port=8050,debug=True)
